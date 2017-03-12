@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="SwipeRefreshLoadLayout">
+        <!-- 0:ListView 1:RecyclerView -->
+        <attr name="type" format="integer" />
+    </declare-styleable>
+</resources>
