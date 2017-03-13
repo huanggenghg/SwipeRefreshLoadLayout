@@ -6,6 +6,7 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -36,7 +37,6 @@ public class SwipeRefreshLoadLayout extends SwipeRefreshLayout {
         mScaledTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
 
         mFooterView = View.inflate(context, R.layout.view_footer, null);
-        System.out.println("scaled touch slop : " + mScaledTouchSlop);
     }
 
     public SwipeRefreshLoadLayout(Context context, AttributeSet attrs) {
@@ -46,7 +46,6 @@ public class SwipeRefreshLoadLayout extends SwipeRefreshLayout {
         mScaledTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
 
         mFooterView = View.inflate(context, R.layout.view_footer, null);
-        System.out.println("scaled touch slop : " + mScaledTouchSlop);
 
         TypedArray a = context.obtainStyledAttributes(attrs,
                 R.styleable.SwipeRefreshLoadLayout);
@@ -59,7 +58,6 @@ public class SwipeRefreshLoadLayout extends SwipeRefreshLayout {
         super.onLayout(changed, left, top, right, bottom);
         if (mRecyclerView == null) {
             if (getChildCount() > 1) {
-                // just demo to test both ListView and RecyclerView
                 if (getChildAt(0) instanceof ListView) {
                     mListView = (ListView) getChildAt(0);
                     CHILD_TYPE = 0;
@@ -79,8 +77,13 @@ public class SwipeRefreshLoadLayout extends SwipeRefreshLayout {
                 mDownY = ev.getY();
                 break;
             case MotionEvent.ACTION_MOVE:
-                if (canLoadMore())
+                if (canLoadMore(mDownY - ev.getY())) {
                     loadData();
+                } else {
+                    // 此处应重置,避免setChildViewOnScroll监听滑动时仍符合条件进入加载
+                    mDownY = 0;
+                    mUpY = 0;
+                }
                 break;
             case MotionEvent.ACTION_UP:
                 mUpY = ev.getY();
@@ -116,7 +119,7 @@ public class SwipeRefreshLoadLayout extends SwipeRefreshLayout {
             mListView.setOnScrollListener(new AbsListView.OnScrollListener() {
                 @Override
                 public void onScrollStateChanged(AbsListView view, int scrollState) {
-                    if (canLoadMore())
+                    if (canLoadMore(mDownY - mUpY))
                         loadData();
                 }
 
@@ -130,7 +133,7 @@ public class SwipeRefreshLoadLayout extends SwipeRefreshLayout {
                 @Override
                 public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                     super.onScrollStateChanged(recyclerView, newState);
-                    if (canLoadMore())
+                    if (canLoadMore(mDownY - mUpY))
                         loadData();
                 }
 
@@ -142,10 +145,13 @@ public class SwipeRefreshLoadLayout extends SwipeRefreshLayout {
         }
     }
 
-    private boolean canLoadMore() {
-        boolean isUp = (mDownY - mUpY) >= mScaledTouchSlop;
-        if (isUp)
+    private boolean canLoadMore(float touchSlop) {
+        boolean isUp = touchSlop >= mScaledTouchSlop;
+        if (isUp) {
             System.out.println("moving up...");
+        } else {
+            System.out.println("moving down...");
+        }
 
         boolean isLastItem = false;
         if (CHILD_TYPE == 0) {
@@ -165,7 +171,7 @@ public class SwipeRefreshLoadLayout extends SwipeRefreshLayout {
         if (!mIsLoading)
             System.out.println("not loading.");
 
-        return isUp && isLastItem && !mIsLoading;
+        return isUp && isLastItem && !mIsLoading && !isRefreshing();
     }
 
     private void loadData() {

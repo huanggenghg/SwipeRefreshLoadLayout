@@ -2,6 +2,7 @@ package com.example.ken.swiperefreshloadlayout;
 
 import android.content.Context;
 import android.os.Handler;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -41,6 +42,15 @@ public class MainActivity extends AppCompatActivity {
         mRecyclerViewAdapter = new RecyclerViewAdapter(this, data);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(mRecyclerViewAdapter);
+        swipeRefreshLoadLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                //mAdapter.loadMore(5);
+                mRecyclerViewAdapter.loadMore(5);
+                swipeRefreshLoadLayout.setRefreshing(false);
+                Toast.makeText(MainActivity.this, "had loaded 5 more items.", Toast.LENGTH_SHORT).show();
+            }
+        });
         swipeRefreshLoadLayout.setOnLoadListener(new SwipeRefreshLoadLayout.OnLoadListener() {
             @Override
             public void onLoad() {
